@@ -16,31 +16,84 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            text-align: center;
         }
         .container {
             background-color: #fff;
             padding: 40px 60px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
+            max-width: 800px; /* コンテナの最大幅を少し広げた */
             width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
+        
+        .header-content {
+            display: flex; /* ★変更: flexbox を使用 */
+            justify-content: space-between; /* ★変更: 両端に配置 */
+            align-items: center; /* ★変更: 垂直方向中央揃え */
+            width: 100%;
+            padding-bottom: 20px; /* 下にスペース */
+            border-bottom: 1px solid #eee; /* 下線を追加して区切りを分かりやすく */
+            margin-bottom: 30px;
+            flex-wrap: wrap; /* 小さい画面で折り返す */
+        }
+
+        .header-left {
+            text-align: left; /* ★変更: 左寄せ */
+            flex-grow: 1; /* ★追加: スペースがあれば広がる */
+            min-width: 250px; /* ★追加: 最小幅を確保 */
+        }
+
         h1 {
             color: #2c3e50;
             font-size: 3em;
-            margin-bottom: 10px;
+            margin: 0;
+            line-height: 1.2; /* 行の高さを調整 */
         }
         p.subtitle {
             color: #7f8c8d;
             font-size: 1.2em;
-            margin-top: 0;
-            margin-bottom: 40px;
+            margin-top: 5px;
+            margin-bottom: 0;
         }
+
+        .header-right {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-left: 20px; /* ★変更: 左側に余白 */
+            min-width: 120px; /* ★追加: 最小幅を確保 */
+        }
+
+        .boy-image {
+            width: 100px; /* 画像のサイズを維持 */
+            height: auto;
+            display: block;
+            margin-bottom: 5px;
+            border-radius: 50%; /* 画像を丸くする */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 影を追加 */
+        }
+
+        .about-link {
+            color: #3498db;
+            text-decoration: none;
+            font-size: 0.9em;
+            white-space: nowrap;
+            transition: color 0.3s ease;
+        }
+        .about-link:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+
         .menu-button {
-            display: inline-block;
+            display: block;
+            width: 550px; /* ボタンの固定幅 */
+            max-width: 100%; /* コンテナからはみ出さないように */
             padding: 15px 30px;
-            margin: 15px 0;
+            margin: 10px 0;
             background-color: #3498db;
             color: white;
             text-decoration: none;
@@ -49,18 +102,73 @@
             transition: background-color 0.3s ease;
             border: none;
             cursor: pointer;
+            box-sizing: border-box;
+            text-align: center;
+            white-space: nowrap;
         }
         .menu-button:hover {
             background-color: #2980b9;
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px;
+            }
+            .header-content {
+                flex-direction: column; /* 縦並びにする */
+                align-items: center; /* 中央揃え */
+                text-align: center;
+            }
+            .header-left {
+                margin-bottom: 20px; /* 下に余白 */
+                text-align: center;
+                min-width: unset; /* 最小幅をリセット */
+            }
+            .header-right {
+                margin-left: 0; /* 余白をリセット */
+                margin-top: 10px; /* 上に余白 */
+            }
+            h1 {
+                font-size: 2.5em; /* フォントサイズを小さく */
+            }
+            p.subtitle {
+                font-size: 1em; /* フォントサイズを小さく */
+            }
+            .menu-button {
+                width: 90%; /* 幅を90%にする */
+                padding: 12px 20px; /* パディングを小さく */
+                font-size: 1em; /* フォントサイズを小さく */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+            p.subtitle {
+                font-size: 0.9em;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>バンドマン太郎</h1>
-        <p class="subtitle">バンドマンマネジメント支援サービス</p>
-
-        <a href="/flyer_maker" class="menu-button">ライブスケジュールフライヤー作成サービス</a>
+        <div class="header-content">
+            <div class="header-left">
+                <h1>バンドマン太郎</h1>
+                <p class="subtitle">バンドマンマネジメント支援サービス</p>
+            </div>
+            <div class="header-right">
+                <img src="{{ url_for('static', filename='bandmantaro_boy.jpg') }}" alt="バンドマン太郎" class="boy-image">
+                <a href="/about" class="about-link">バンドマン太郎とは？</a>
+            </div>
         </div>
+
+        <a href="/flyer_maker" class="menu-button">ライブスケジュールフライヤー作成ツール</a>
+        <a href="/sns_announcement" class="menu-button">SNS告知文作成ツール</a>
 </body>
 </html>

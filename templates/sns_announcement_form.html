@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SNS告知文作成ツール</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px 50px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #0056b3;
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"],
+        textarea {
+            width: calc(100% - 22px); /* borderとpaddingを考慮 */
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        .time-inputs {
+            display: flex;
+            gap: 15px; /* 入力欄間の隙間 */
+            margin-bottom: 15px;
+        }
+        .time-inputs > div {
+            flex: 1; /* 等しい幅に */
+        }
+        .checkbox-group {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .checkbox-group label {
+            display: inline-block;
+            margin-right: 15px;
+            margin-bottom: 5px;
+            font-weight: normal;
+        }
+        /* ★変更ここから★ */
+        button:not(.back-to-top-button) { /* back-to-top-button 以外のボタンに適用 */
+            background-color: #007bff; /* メインカラーの青 */
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+            width: 100%; /* 幅を広げる */
+        }
+        button:not(.back-to-top-button):hover {
+            background-color: #0056b3; /* ホバー時の色を少し濃い青に */
+        }
+        /* ★変更ここまで★ */
+
+        .generated-output {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            padding: 15px;
+            margin-top: 25px;
+            border-radius: 5px;
+            white-space: pre-wrap; /* 改行を保持 */
+            word-wrap: break-word; /* 長い単語で改行 */
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #495057;
+        }
+        .back-to-top-button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            background-color: #555;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .back-to-top-button:hover {
+            background-color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-to-top-button">← トップに戻る</a>
+
+        <h1>SNS告知文作成ツール</h1>
+
+        <form id="snsForm" action="/generate_sns_announcement" method="post">
+            <label for="live_name">ライブ名:</label>
+            <input type="text" id="live_name" name="live_name" placeholder="例: 『サルベージプロジェクト』">
+
+            <label for="live_date">日付 (例: 2025.07.27):</label>
+            <input type="text" id="live_date" name="live_date" placeholder="例: 2025.07.27">
+
+            <label for="live_day_of_week">曜日 (例: SUN):</label>
+            <input type="text" id="live_day_of_week" name="live_day_of_week" placeholder="例: SUN">
+            
+            <label for="venue">場所:</label>
+            <input type="text" id="venue" name="venue" placeholder="例: navey floor 赤坂">
+
+            <div class="time-inputs">
+                <div>
+                    <label for="open_time">開場時間 (OPEN):</label>
+                    <input type="text" id="open_time" name="open_time" placeholder="例: 16:30">
+                </div>
+                <div>
+                    <label for="start_time">開演時間 (START):</label>
+                    <input type="text" id="start_time" name="start_time" placeholder="例: 17:00">
+                </div>
+            </div>
+
+            <label for="ticket_info">チケット情報 (料金など):</label>
+            <textarea id="ticket_info" name="ticket_info" rows="3" placeholder="例: 一般　¥2,500(+1D¥700)&#10;学割　¥2,000(+1D¥700)"></textarea>
+
+            <label for="ticket_link">チケット予約URL:</label>
+            <input type="text" id="ticket_link" name="ticket_link" placeholder="例: https://tiget.net/events/xxxxxx">
+
+            <label for="streaming_link">配信URL (任意):</label>
+            <input type="text" id="streaming_link" name="streaming_link" placeholder="例: https://twitcasting.tv/c:bluemy0108/shopcart/xxxxxx">
+
+            <label>ハッシュタグ選択:</label>
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="hashtags" value="#バンド名"> #バンド名</label>
+                <label><input type="checkbox" name="hashtags" value="#ライブ告知"> #ライブ告知</label>
+                <label><input type="checkbox" name="hashtags" value="#邦ロック"> #邦ロック</label>
+                <label><input type="checkbox" name="hashtags" value="#ライブハウス"> #ライブハウス</label>
+                <label><input type="checkbox" name="hashtags" value="#音楽好きな人と繋がりたい"> #音楽好きな人と繋がりたい</label>
+                <label><input type="checkbox" name="hashtags" value="#バンド好きな人と繋がりたい"> #バンド好きな人と繋がりたい</label>
+                <label><input type="checkbox" name="hashtags" value="#東京ライブ"> #東京ライブ</label>
+                <label><input type="checkbox" name="hashtags" value="#渋谷"> #渋谷</label>
+                <label><input type="checkbox" name="hashtags" value="#下北沢"> #下北沢</label>
+                <label><input type="checkbox" name="hashtags" value="#〇〇企画"> #〇〇企画</label>
+                </div>
+
+            <button type="submit">告知文を生成</button>
+        </form>
+
+        {% if generated_text %}
+        <div class="generated-output">
+            <h3>生成された告知文:</h3>
+            <pre id="output-text">{{ generated_text }}</pre>
+            <button onclick="copyToClipboard()" style="margin-top: 15px; background-color: #007bff;">コピー</button>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function copyToClipboard() {
+            const outputText = document.getElementById('output-text');
+            const range = document.createRange();
+            range.selectNode(outputText);
+            window.getSelection().removeAllRanges(); // Clear current selection
+            window.getSelection().addRange(range); // Select the text
+            document.execCommand('copy'); // Copy to clipboard
+            window.getSelection().removeAllRanges(); // Deselect
+            alert('告知文がコピーされました！');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>バンドマン太郎とは？</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px 50px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        h1 {
+            text-align: center;
+            color: #0056b3;
+            margin-bottom: 30px;
+        }
+        p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        ul {
+            list-style-type: disc;
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .about-boy-image { /* aboutページ用の画像スタイル */
+            display: block;
+            margin: 0 auto 20px auto; /* 中央揃え、下に余白 */
+            width: 150px; /* 適度なサイズに調整 */
+            height: auto;
+        }
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            background-color: #555;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .back-button:hover {
+            background-color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-button">← トップに戻る</a>
+        <h1>バンドマン太郎とは？</h1>
+        <img src="{{ url_for('static', filename='bandmantaro_boy.jpg') }}" alt="バンドマン太郎" class="about-boy-image">
+        <p>
+            「バンドマン太郎」は、日々忙しいバンドマンの皆様が、バンド活動をよりスムーズに行えるようサポートするために開発されたツールです。
+            面倒な事務作業や告知文の作成など、クリエイティブな活動以外の負担を軽減し、皆様が音楽に集中できる環境を提供することを目指しています。
+        </p>
+        <p>提供している主な機能:</p>
+        <ul>
+            <li>「ライブスケジュールフライヤー作成ツール」: 必要な情報を入力するだけで、高品質なライブスケジュールのフライヤー画像を自動で生成します。デザインの知識がなくても手軽に作成できます。
+            </li>
+            <li>「SNS告知文作成ツール」: ライブ情報やチケットURL、ハッシュタグなどを入力するだけで、SNSで使える告知文を自動で生成します。効率的な告知をサポートします。
+            </li>
+            </ul>
+        <p>
+            私たちは、バンドマンの皆様がより多くの時間を音楽制作や練習に費やせるよう、今後も機能の拡充と改善を続けてまいります。ぜひ「バンドマン太郎」をあなたのバンド活動にお役立てください！
+        </p>
+    </div>
+</body>
+</html>

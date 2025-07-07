@@ -19,14 +19,14 @@
         }
         .container {
             background-color: #fff;
-            padding: 20px 40px;
+            padding: 30px 50px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            max-width: 900px;
+            max-width: 700px;
             width: 100%;
             box-sizing: border-box;
-            margin-top: 20px; /* 上部に少し余白を追加 */
-            margin-bottom: 20px; /* 下部に少し余白を追加 */
+            margin-top: 20px;
+            margin-bottom: 20px;
         }
         h1 {
             text-align: center;
@@ -37,65 +37,139 @@
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
+            color: #333;
         }
         input[type="text"],
         input[type="file"],
-        select,
+        select, /* ★変更: select も対象に追加 */
         textarea {
-            width: calc(100% - 20px);
+            width: calc(100% - 22px); 
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ddd;
             border-radius: 4px;
             box-sizing: border-box;
+            font-size: 1em;
         }
-        .schedule-item {
+        input[type="color"] { 
+            width: 100px; 
+            height: 35px; 
+            padding: 0;
+            border: 2px solid #ccc; 
+            border-radius: 4px; 
+            margin-bottom: 0px; 
+            cursor: pointer;
+            box-sizing: border-box; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        input[type="color"]:hover {
+            border-color: #999;
+            box-shadow: 0 3px 8px rgba[0,0,0,0.2);
+        }
+        .color-picker-group {
+            display: flex;
+            align-items: flex-end; 
+            gap: 30px; 
+            margin-bottom: 25px; 
+            margin-top: 15px; 
+        }
+        .color-picker-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .schedule-input-group {
             border: 1px solid #e0e0e0;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
             background-color: #f9f9f9;
         }
-        .schedule-item label, .schedule-item input, .schedule-item select {
-            display: inline-block;
-            width: auto;
-            margin-right: 10px;
+        .schedule-item {
+            display: flex;
+            gap: 8px; 
+            margin-bottom: 10px;
+            align-items: center; 
         }
-        .schedule-item input[type="text"] {
-            width: 150px;
+        .schedule-item input[type="text"], /* テキスト入力と */
+        .schedule-item select { /* select も対象 */
+            margin-bottom: 0; 
+            font-size: 0.95em; 
+            padding: 8px; 
+            height: 35px; /* 高さを揃える */
         }
-        .schedule-item select {
-            width: auto;
+        
+        /* ★変更: select 要素の flex-grow も調整 */
+        .schedule-item select[name="schedule_date_num[]"] {
+            flex-grow: 1; 
+            min-width: 50px;
+        }
+        .schedule-item select[name="schedule_day_of_week[]"] {
+            flex-grow: 1; 
+            min-width: 50px;
+        }
+        .schedule-item input[name="schedule_venue[]"] {
+            flex-grow: 2; 
+            min-width: 100px;
+        }
+       
+        .schedule-item button {
+            padding: 8px 15px;
+            white-space: nowrap;
+            background-color: #dc3545; 
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease;
+        }
+        .schedule-item button:hover {
+            background-color: #c82333;
         }
         .button-group {
-            text-align: center;
-            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
         }
-        button {
+        .button-group button {
+            flex: 1;
+        }
+        button[type="submit"] { 
             background-color: #007bff;
             color: white;
-            padding: 12px 20px;
+            padding: 12px 25px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
-            margin: 0 10px;
+            font-size: 1.1em;
+            margin-top: 25px; 
             transition: background-color 0.3s ease;
+            width: 100%;
         }
-        button:hover {
+        button[type="submit"]:hover {
             background-color: #0056b3;
         }
-        input[type="range"] {
-            width: calc(100% - 20px);
-            margin-bottom: 15px;
+        button:not([type="submit"]):not(.schedule-item button) { 
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        button:not([type="submit"]):not(.schedule-item button):hover {
+            background-color: #5a6268;
         }
 
-        /* トップに戻るボタンのスタイル */
         .back-to-top-button {
             display: inline-block;
             padding: 10px 20px;
-            margin-bottom: 20px; /* フォームとの間に余白 */
-            background-color: #555; /* 暗めの色 */
+            margin-bottom: 20px;
+            background-color: #555;
             color: white;
             text-decoration: none;
             border-radius: 5px;
@@ -114,108 +188,156 @@
         <a href="/" class="back-to-top-button">← トップに戻る</a>
 
         <h1>ライブスケジュールフライヤー作成</h1>
-        <form action="/generate" method="post" enctype="multipart/form-data">
+
+        <form id="flyerForm" action="/generate_flyer" method="post" enctype="multipart/form-data">
             <label for="band_name">バンド名:</label>
-            <input type="text" id="band_name" name="band_name" value="あなたのバンド名" required>
+            <input type="text" id="band_name" name="band_name" placeholder="例: Manta Crantz" value="{{ band_name }}">
 
             <label for="month">対象月:</label>
-            <select id="month" name="month" required>
-                {% for m in month_options %}
-                    <option value="{{ m }}" {% if m == current_month %}selected{% endif %}>{{ m }}月</option>
-                {% endfor %}
-            </select>
+            <input type="text" id="month" name="month" placeholder="例: 7月" value="{{ month }}">
 
-            <label>アーティスト写真 (推奨: 横長):</label>
+            <label for="artist_photo">アーティスト写真 (推奨: 横長):</label>
             <input type="file" id="artist_photo" name="artist_photo" accept="image/*">
-
+            
             <label for="photo_scale">写真サイズ調整:</label>
-            <input type="range" id="photo_scale" name="photo_scale" min="0.1" max="1.0" step="0.05" value="0.7">
+            <input type="range" id="photo_scale" name="photo_scale" min="0.1" max="1.0" step="0.01" value="{{ photo_scale }}">
+            <span id="photo_scale_value">{{ photo_scale }}</span>
 
-            <label for="font_selection">日本語フォント選択:</label>
-            <select id="font_selection" name="selected_font_path" required>
+            <label for="font_selection">フォント選択:</label>
+            <select id="font_selection" name="font_selection">
                 {% for font in japanese_font_options %}
-                    <option value="{{ font.path }}" {% if font.name == default_selected_font_name %}selected{% endif %}>{{ font.name }}</option>
+                    <option value="{{ font.name }}" data-path="{{ font.path }}" {% if font_selection == font.name %}selected{% endif %}>
+                        {{ font.name }}
+                    </option>
                 {% endfor %}
             </select>
-            <p style="font-size: 0.8em; color: gray; margin-top: -10px; margin-bottom: 15px;">※文字化けする場合は、別のフォントをお試しください。</p>
-
-            <div id="schedule-inputs">
-                <h2>ライブスケジュール入力</h2>
-                <div class="schedule-item">
-                    <label>会場名:</label>
-                    <input type="text" name="venue_0" placeholder="例: 赤坂 Navey Floor">
-                    <label>日付:</label>
-                    <select name="date_0">
-                        {% for d in date_options %}
-                            <option value="{{ d }}" {% if d == current_date %}selected{% endif %}>{{ d }}</option>
-                        {% endfor %}
-                    </select>
-                    <label>曜日:</label>
-                    <select name="day_of_week_0">
-                        {% for dw in day_of_week_options %}
-                            <option value="{{ dw }}" {% if dw == current_day_of_week %}selected{% endif %}>{{ dw }}</option>
-                        {% endfor %}
-                    </select>
+            <div class="color-picker-group">
+                <div class="color-picker-item">
+                    <label for="background_color">背景色:</label>
+                    <input type="color" id="background_color" name="background_color" value="#000000">
+                </div>
+                <div class="color-picker-item">
+                    <label for="text_color">文字色:</label>
+                    <input type="color" id="text_color" name="text_color" value="#FFFFFF">
                 </div>
             </div>
-            <input type="hidden" id="schedule_count" name="schedule_count" value="1">
 
-            <div class="button-group">
-                <button type="button" onclick="addScheduleInput()">スケジュール追加</button>
-                <button type="button" onclick="removeLastScheduleInput()">スケジュール削除</button>
+            <h2>ライブスケジュール入力</h2>
+            <div id="schedule-inputs" class="schedule-input-group">
+                {% if schedules %}
+                    {% for schedule in schedules %}
+                    <div class="schedule-item">
+                        <select name="schedule_date_num[]">
+                            <option value="">日付</option>
+                            {% for date_opt in date_options %}
+                                <option value="{{ date_opt }}" {% if schedule.date_num == date_opt %}selected{% endif %}>{{ date_opt }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="schedule_day_of_week[]">
+                            <option value="">曜日</option>
+                            {% for day_opt in day_of_week_options %}
+                                <option value="{{ day_opt }}" {% if schedule.day_of_week == day_opt %}selected{% endif %}>{{ day_opt }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" name="schedule_venue[]" placeholder="会場名" value="{{ schedule.venue }}">
+                        <button type="button" onclick="removeScheduleItem(this)">削除</button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="schedule-item">
+                        <select name="schedule_date_num[]">
+                            <option value="">日付</option>
+                            {% for date_opt in date_options %}
+                                <option value="{{ date_opt }}">{{ date_opt }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="schedule_day_of_week[]">
+                            <option value="">曜日</option>
+                            {% for day_opt in day_of_week_options %}
+                                <option value="{{ day_opt }}">{{ day_opt }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" name="schedule_venue[]" placeholder="会場名">
+                        <button type="button" onclick="removeScheduleItem(this)">削除</button>
+                    </div>
+                {% endif %}
             </div>
+            <button type="button" onclick="addScheduleItem()">スケジュール追加</button>
+            <button type="button" onclick="clearScheduleItems()">スケジュール全削除</button>
 
-            <label for="free_text">その他 (注意事項、SNSなど):</label>
-            <textarea id="free_text" name="free_text" rows="5">X:@MantaCrantz</textarea>
-            <div class="button-group">
-                <button type="submit">フライヤー生成</button>
-            </div>
+            <label for="other_info">その他 (注意事項、SNSなど):</label>
+            <textarea id="other_info" name="other_info" rows="4" placeholder="例: X:@MantaCrantz">{{ other_info }}</textarea>
+
+            <button type="submit">フライヤー生成</button>
         </form>
     </div>
 
     <script>
-        let scheduleCount = 1;
-        const dateOptions = [
-            {% for d in date_options %}
-                "{{ d }}",
-            {% endfor %}
-        ];
-        const dayOfWeekOptions = [
-            {% for dw in day_of_week_options %}
-                "{{ dw }}",
-            {% endfor %}
-        ];
-        const currentDayOfWeek = "{{ current_day_of_week }}";
+        // Pythonから渡された日付と曜日のオプションを取得
+        const dateOptions = JSON.parse('{{ date_options | tojson }}');
+        const dayOfWeekOptions = JSON.parse('{{ day_of_week_options | tojson }}');
 
-        function addScheduleInput() {
-            const scheduleInputsDiv = document.getElementById('schedule-inputs');
-            const newItemDiv = document.createElement('div');
-            newItemDiv.classList.add('schedule-item');
-            newItemDiv.innerHTML = `
-                <label>会場名:</label>
-                <input type="text" name="venue_${scheduleCount}" placeholder="例: 赤坂 Navey Floor">
-                <label>日付:</label>
-                <select name="date_${scheduleCount}">
-                    ${dateOptions.map(d => `<option value="${d}">${d}</option>`).join('')}
-                </select>
-                <label>曜日:</label>
-                <select name="day_of_week_${scheduleCount}">
-                    ${dayOfWeekOptions.map(dw => `<option value="${dw}" ${dw === currentDayOfWeek ? 'selected' : ''}>${dw}</option>`).join('')}
-                </select>
+        // 写真サイズ調整スライダーの値表示
+        const photoScaleSlider = document.getElementById('photo_scale');
+        const photoScaleValueSpan = document.getElementById('photo_scale_value');
+        photoScaleSlider.addEventListener('input', () => {
+            photoScaleValueSpan.textContent = photoScaleSlider.value;
+        });
+
+        // スケジュール追加・削除機能
+        function addScheduleItem() {
+            const container = document.getElementById('schedule-inputs');
+            const newItem = document.createElement('div');
+            newItem.classList.add('schedule-item');
+
+            let dateSelectHtml = '<select name="schedule_date_num[]"><option value="">日付</option>';
+            dateOptions.forEach(opt => {
+                dateSelectHtml += `<option value="${opt}">${opt}</option>`;
+            });
+            dateSelectHtml += '</select>';
+
+            let dayOfWeekSelectHtml = '<select name="schedule_day_of_week[]"><option value="">曜日</option>';
+            dayOfWeekOptions.forEach(opt => {
+                dayOfWeekSelectHtml += `<option value="${opt}">${opt}</option>`;
+            });
+            dayOfWeekSelectHtml += '</select>';
+
+            newItem.innerHTML = `
+                ${dateSelectHtml}
+                ${dayOfWeekSelectHtml}
+                <input type="text" name="schedule_venue[]" placeholder="会場名">
+                <button type="button" onclick="removeScheduleItem(this)">削除</button>
             `;
-            scheduleInputsDiv.appendChild(newItemDiv);
-            scheduleCount++;
-            document.getElementById('schedule_count').value = scheduleCount;
+            container.appendChild(newItem);
         }
 
-        function removeLastScheduleInput() {
-            const scheduleInputsDiv = document.getElementById('schedule-inputs');
-            if (scheduleCount > 1) { // 少なくとも1つは残す
-                scheduleInputsDiv.removeChild(scheduleInputsDiv.lastChild);
-                scheduleCount--;
-                document.getElementById('schedule_count').value = scheduleCount;
+        function removeScheduleItem(button) {
+            const itemToRemove = button.parentNode;
+            if (itemToRemove.parentNode.children.length > 1) { 
+                itemToRemove.remove();
+            } else {
+                // 最後の1つは削除しないが、内容を初期化する
+                const selects = itemToRemove.querySelectorAll('select');
+                selects.forEach(select => select.value = ''); // selectの値をクリア
+                const inputs = itemToRemove.querySelectorAll('input[type="text"]');
+                inputs.forEach(input => input.value = ''); // inputの値をクリア
             }
         }
+
+        function clearScheduleItems() {
+            const container = document.getElementById('schedule-inputs');
+            container.innerHTML = ''; 
+            addScheduleItem(); // 1つだけ空の項目を追加
+            // addScheduleItem()で追加した項目を、さらに空にする必要はない
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const scheduleInputsContainer = document.getElementById('schedule-inputs');
+            // 初期ロード時にスケジュールが何もなければ、1つだけ追加
+            if (scheduleInputsContainer.children.length === 0) {
+                addScheduleItem();
+            }
+        });
     </script>
 </body>
 </html>

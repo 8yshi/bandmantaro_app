@@ -1,14 +1,15 @@
-from flask import Flask, render_template, request, send_file
-import os
 import io
+import os
+import re 
+from flask import Flask, render_template, request, send_file
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime, timedelta
+import calendar # ★追加: calendarモジュールをインポート
 import math
 import platform
 
 app = Flask(__name__)
 
-# アップロードされたファイルを一時的に保存するフォルダ
 UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -16,9 +17,10 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # --- 日本語フォントをサーバー上で見つけるための関数 ---
 def find_japanese_fonts():
-    found_fonts = {} # 辞書を使ってフォントファミリー名をキーに、パスを値にする
-    # Flaskアプリのルートディレクトリからfontsフォルダを探索
-    base_fonts_dir = os.path.join(app.root_path, 'fonts')
+    found_fonts = {}
+    
+    # ★修正: プロジェクトのルートにある 'fonts' フォルダを指すように変更
+    base_fonts_dir = os.path.join(app.root_path, 'fonts') 
     
     search_paths = [base_fonts_dir]
 
@@ -38,51 +40,36 @@ def find_japanese_fonts():
                 if file_name.lower().endswith(font_extensions):
                     file_path = os.path.join(root, file_name)
                     try:
-                        font = ImageFont.truetype(file_path, 10)
-                        font_family_name = font.getname()[0] # フォントファミリー名を取得
+                        # 軽くフォントをロードして名前を取得
+                        font = ImageFont.truetype(file_path, 30) 
+                        font_family_name = font.getname()[0]
                         
-                        # 日本語フォントのキーワードでフィルタリング
-                        if any(keyword in font_family_name.lower() or keyword in file_name.lower() for keyword in japanese_font_keywords):
-                            # 同じファミリー名のフォントが既に登録されているかチェック
-                            if font_family_name not in found_fonts:
-                                # まだ登録されていない場合、このフォント（例: 最初に見つかったRegularなど）を登録
-                                found_fonts[font_family_name] = file_path
-                            else:
-                                # 既に登録されている場合でも、より「Regular」に近いものがあれば更新
-                                # これは簡易的なロジックで、より堅牢なフォント選択が必要な場合は複雑化します
-                                if "regular" in file_name.lower() and "regular" not in os.path.basename(found_fonts[font_family_name]).lower():
-                                    found_fonts[font_family_name] = file_path
-                                elif "jp-regular" in file_name.lower() and "jp-regular" not in os.path.basename(found_fonts[font_family_name]).lower():
-                                     found_fonts[font_family_name] = file_path
+                        display_name = font_family_name
+                        if "noto sans jp" in display_name.lower():
+                            display_name = "Noto Sans JP"
+                        elif "noto serif jp" in display_name.lower():
+                            display_name = "Noto Serif JP"
+                        elif "dela gothic one" in display_name.lower():
+                            display_name = "Dela Gothic One"
+                        elif "m plus rounded 1c" in display_name.lower():
+                            display_name = "M PLUS Rounded 1c"
+                        else:
+                            display_name = display_name.replace("_", " ").replace("  ", " ").strip()
+
+                        if display_name not in found_fonts:
+                            found_fonts[display_name] = file_path
+                        else:
+                            current_path = found_fonts[display_name]
+                            if ("regular" in file_name.lower() and "regular" not in os.path.basename(current_path).lower()) or \
+                               ("jp-regular" in file_name.lower() and "jp-regular" not in os.path.basename(current_path).lower()):
+                                found_fonts[display_name] = file_path
 
                     except Exception as e:
-                        # print(f"Error loading font {file_path}: {e}") # デバッグ用にコメントアウト解除しても良い
-                        pass # 読み込めないフォントは無視
+                        # print(f"Error loading font {file_path}: {e}") # デバッグ用
+                        pass
     
-    # 辞書を (フォント名, パス) のタプルのリストに変換し、ソート
-    # ここで、ユーザーに表示されるフォント名をより分かりやすく調整することも可能
-    # 例: "NotoSansJP-Regular" -> "Noto Sans JP"
-    final_font_list = []
-    for name, path in found_fonts.items():
-        # 表示名を調整する例 (必要であれば)
-        display_name = name.replace("_", " ") # アンダースコアをスペースに
-        display_name = display_name.replace("  ", " ") # 重複スペースを削除
-        if "Noto Sans JP" in display_name and "Noto Sans JP" not in [n for n,p in final_font_list]: # 既にNoto Sans JPが追加済みかチェック
-            final_font_list.append(("Noto Sans JP", path))
-        elif "Noto Serif JP" in display_name and "Noto Serif JP" not in [n for n,p in final_font_list]: # 既にNoto Serif JPが追加済みかチェック
-             final_font_list.append(("Noto Serif JP", path))
-        elif "Dela Gothic One" in display_name and "Dela Gothic One" not in [n for n,p in final_font_list]:
-            final_font_list.append(("Dela Gothic One", path))
-        elif "M PLUS Rounded 1c" in display_name and "M PLUS Rounded 1c" not in [n for n,p in final_font_list]:
-            final_font_list.append(("M PLUS Rounded 1c", path))
-        else:
-            final_font_list.append((display_name, path)) # その他のフォント
+    final_font_list = sorted([(name, path) for name, path in found_fonts.items()], key=lambda x: x[0].lower())
 
-    # フォント名をアルファベット順にソート
-    final_font_list.sort(key=lambda x: x[0].lower())
-
-
-    # フォントが見つからない場合のフォールバック（表示用）
     if not final_font_list:
         final_font_list.append(("（日本語フォントが見つかりません）", None))
 
@@ -94,103 +81,205 @@ def home():
     """
     トップメニューページを表示します。
     """
-    return render_template('index.html') # 新しいindex.htmlをレンダリング
+    return render_template('index.html')
+
+@app.route('/about')
+def about_page():
+    """
+    「バンドマン太郎とは？」の説明ページを表示します。
+    """
+    return render_template('about.html')
 
 @app.route('/flyer_maker')
 def flyer_maker_form():
     """
     フライヤー作成フォームページを表示します。
     """
-    # 月の選択肢を生成
     month_options = [str(i) for i in range(1, 13)]
-    current_month = str(datetime.now().month)
+    current_month_num = datetime.now().month # ★変更: 現在の月の数値を取得
 
-    # 日付の選択肢を生成（現在の月の最終日まで）
     today = datetime.now()
     current_year = today.year
-    try:
-        if int(current_month) == 12:
-            last_day_of_month = datetime(current_year + 1, 1, 1) - timedelta(days=1)
-        else:
-            last_day_of_month = datetime(current_year, int(current_month) + 1, 1) - timedelta(days=1)
-    except ValueError:
-        last_day_of_month = (datetime(today.year, today.month, 1) + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-    date_options = [str(i) for i in range(1, last_day_of_month.day + 1)]
+    
+    # ★変更: 選択式の日付リストを生成
+    # 指定された月の最終日を取得
+    num_days = calendar.monthrange(current_year, current_month_num)[1]
+    date_options = [str(i) for i in range(1, num_days + 1)]
+
     day_of_week_options = ["(月)", "(火)", "(水)", "(木)", "(金)", "(土)", "(日)"]
-
-    # --- フォント選択肢を渡す ---
+    
     japanese_fonts = find_japanese_fonts()
-    # render_templateに渡すのは (表示名, パス) のタプルのリスト
-    # デフォルトの選択は最初のフォントにする（もしあれば）
-    default_selected_font_name = japanese_fonts[0][0] if japanese_fonts and japanese_fonts[0][1] else "（日本語フォントが見つかりません）"
-    default_selected_font_path = japanese_fonts[0][1] if japanese_fonts and japanese_fonts[0][1] else "" # パスも渡す
+    default_selected_font_name = "Noto Sans JP" 
+    default_selected_font_path = None
+    for name, path in japanese_fonts:
+        if name == "Noto Sans JP":
+            default_selected_font_path = path
+            break
+    if not default_selected_font_path and japanese_fonts: 
+        default_selected_font_name = japanese_fonts[0][0]
+        default_selected_font_path = japanese_fonts[0][1]
 
-    return render_template('flyer_form.html', # リネームしたflyer_form.htmlをレンダリング
-                           month_options=month_options,
-                           current_month=current_month,
-                           date_options=date_options,
-                           current_date=str(today.day),
-                           day_of_week_options=day_of_week_options,
-                           current_day_of_week=day_of_week_options[(today.weekday()) % 7],
-                           japanese_font_options=[{'name': name, 'path': path} for name, path in japanese_fonts], # 表示名とパスの辞書リストを渡す
-                           default_selected_font_name=default_selected_font_name,
-                           default_selected_font_path=default_selected_font_path
+
+    return render_template('flyer_form.html',
+                           band_name="", 
+                           month="", 
+                           schedules=[], 
+                           other_info="",
+                           photo_scale=0.7, 
+                           font_selection=default_selected_font_name, 
+                           japanese_font_options=[{'name': name, 'path': path} for name, path in japanese_fonts],
+                           default_selected_font_path=default_selected_font_path,
+                           date_options=date_options, # ★追加
+                           day_of_week_options=day_of_week_options # ★追加
                            )
 
+@app.route('/sns_announcement')
+def sns_announcement_form():
+    """
+    SNS告知文作成ツールのフォームページを表示します。
+    """
+    return render_template('sns_announcement_form.html')
 
-@app.route('/generate', methods=['POST'])
+@app.route('/generate_sns_announcement', methods=['POST'])
+def generate_sns_announcement():
+    """
+    フォームからデータを受け取り、SNS告知文を生成して返します。
+    """
+    live_name = request.form.get('live_name', '').strip()
+    live_date = request.form.get('live_date', '').strip()
+    live_day_of_week = request.form.get('live_day_of_week', '').strip()
+    venue = request.form.get('venue', '').strip()
+    open_time = request.form.get('open_time', '').strip()
+    start_time = request.form.get('start_time', '').strip()
+    ticket_info = request.form.get('ticket_info', '').strip()
+    ticket_link = request.form.get('ticket_link', '').strip()
+    streaming_link = request.form.get('streaming_link', '').strip()
+    
+    selected_hashtags = request.form.getlist('hashtags') 
+
+    announcement_parts = []
+
+    if live_date or live_day_of_week or venue: 
+        announcement_parts.append("【Live Info】")
+        date_venue_line = []
+        if live_date:
+            date_venue_line.append(live_date)
+        if live_day_of_week:
+            date_venue_line.append(f"（{live_day_of_week}）")
+        if venue:
+            date_venue_line.append(venue)
+        if date_venue_line:
+            announcement_parts.append(" ".join(date_venue_line))
+
+    if live_name:
+        announcement_parts.append(f"『{live_name}』")
+
+    if open_time and start_time:
+        announcement_parts.append(f"OPEN / START {open_time} / {start_time}")
+    elif open_time: 
+        announcement_parts.append(f"OPEN {open_time}")
+    elif start_time: 
+        announcement_parts.append(f"START {start_time}")
+
+    if ticket_info:
+        announcement_parts.append(ticket_info)
+    if ticket_link:
+        announcement_parts.append(ticket_link)
+    
+    if streaming_link:
+        announcement_parts.append(f"配信 {streaming_link}")
+
+    if selected_hashtags:
+        if announcement_parts and announcement_parts[-1] != "":
+             announcement_parts.append("") 
+        announcement_parts.append(" ".join(selected_hashtags)) 
+
+    generated_text = "\n".join(announcement_parts)
+
+    return render_template('sns_announcement_form.html', generated_text=generated_text)
+
+@app.route('/generate_flyer', methods=['POST']) 
 def generate_flyer():
     """
     フォームからデータを受け取り、フライヤー画像を生成して返します。
     """
     band_name = request.form['band_name']
     month_str = request.form['month']
-    free_text = request.form['free_text']
+    free_text = request.form.get('other_info', '').strip() 
     artist_photo = request.files.get('artist_photo')
-    artist_photo_scale_factor = float(request.form.get('photo_scale', 0.7)) # デフォルトは0.7
+    artist_photo_scale_factor = float(request.form.get('photo_scale', 0.7))
     
-    # --- フォームから選択されたフォントパスを取得 ---
-    selected_font_path = request.form.get('selected_font_path')
-    if selected_font_path == "None": # Noneが文字列として送られてくる可能性があるため
+    background_color_hex = request.form.get('background_color', '#000000') 
+    text_color_hex = request.form.get('text_color', '#FFFFFF') 
+
+    selected_font_name = request.form.get('font_selection')
+    selected_font_path = None
+    all_japanese_fonts = find_japanese_fonts()
+    for name, path in all_japanese_fonts:
+        if name == selected_font_name:
+            selected_font_path = path
+            break
+    
+    if selected_font_path == "None" or not selected_font_path:
         selected_font_path = None
 
     schedules = []
-    schedule_count = int(request.form['schedule_count'])
-    for i in range(schedule_count):
-        venue = request.form.get(f'venue_{i}', '').strip()
-        date = request.form.get(f'date_{i}', '').strip()
-        day_of_week = request.form.get(f'day_of_week_{i}', '').strip()
-        if venue and date and day_of_week:
-            schedules.append(f"{date}{day_of_week} {venue}")
+    # ★変更: selectから値を受け取る
+    schedule_date_nums = request.form.getlist('schedule_date_num[]')
+    schedule_day_of_weeks = request.form.getlist('schedule_day_of_week[]')
+    schedule_venues = request.form.getlist('schedule_venue[]')
+
+    for i in range(len(schedule_date_nums)):
+        date_num = schedule_date_nums[i].strip()
+        day_of_week = schedule_day_of_weeks[i].strip()
+        venue = schedule_venues[i].strip()
+        
+        # 少なくとも日付、曜日、会場のいずれかがあれば有効なスケジュールとみなす
+        if date_num or day_of_week or venue:
+            schedule_line_parts = []
+            if date_num:
+                schedule_line_parts.append(date_num)
+            if day_of_week: 
+                schedule_line_parts.append(day_of_week)
+            
+            if (date_num or day_of_week) and venue: 
+                schedule_line_parts.append(" ") 
+
+            if venue:
+                schedule_line_parts.append(venue)
+            
+            filtered_parts = [p for p in schedule_line_parts if p.strip() != ""]
+            schedule_line = "".join(filtered_parts) 
+            
+            if schedule_line: 
+                schedules.append(schedule_line)
 
     if not schedules:
-        return "ライブスケジュールが入力されていません。", 400
+        print("Warning: No live schedules entered.")
 
-    # --- A4サイズと解像度（固定） ---
     width = 2480
     height = 3508
 
-    # --- 各種テキスト定義 ---
     title_text = "Live Schedule"
-    month_display_text = f"{month_str}月"
+    month_display_text = f"{month_str}"
 
-    # --- フォント読み込み ---
-    # selected_font_path が None または存在しない場合はデフォルトフォントを使用
-    if not selected_font_path or not os.path.exists(selected_font_path):
-        print(f"Warning: Selected font file not found at {selected_font_path}. Using default font.")
-        # selected_font_path を None にして、ImageFont.truetype() がデフォルトフォントを使うようにする
-        selected_font_path_for_pil = None
-    else:
+    selected_font_path_for_pil = None
+    if selected_font_path and os.path.exists(selected_font_path):
         selected_font_path_for_pil = selected_font_path
+    else:
+        print(f"Warning: Selected font file not found at {selected_font_path}. Attempting fallback.")
+        if all_japanese_fonts and all_japanese_fonts[0][1]:
+            selected_font_path_for_pil = all_japanese_fonts[0][1]
+            print(f"Fallback to: {selected_font_path_for_pil}")
+        else:
+            print("No Japanese fonts found. Using Pillow's default font.")
 
 
-    # --- 初期フォントサイズ ---
     initial_font_size_title_month = 210
     initial_font_size_band_name = 180
     initial_font_size_free_text = 72
     initial_font_size_schedule = 120
 
-    # --- 最小フォントサイズ ---
     min_font_size_title_month = 120
     min_font_size_band_name = 100
     min_font_size_free_text = 40
@@ -201,16 +290,15 @@ def generate_flyer():
     current_font_size_schedule = initial_font_size_schedule
     current_font_size_free_text = initial_font_size_free_text
 
-    # --- 余白など (固定) ---
     horizontal_padding = 120
     fallback_vertical_padding = 30
     gap_title_band = 100
-    gap_band_photo = 80
-    gap_photo_schedule = 80
-    schedule_line_gap = 40
+    gap_band_photo = 120
+    gap_photo_schedule = 120
+    schedule_line_gap = 40 
     gap_schedule_free = 80
-    free_text_line_gap = 20
-    schedule_part_gap = 60
+    free_text_line_gap = 20 
+    schedule_part_gap = 60 
 
     SCHEDULE_TWO_COLUMN_THRESHOLD = 4
 
@@ -218,35 +306,37 @@ def generate_flyer():
 
     total_content_height_needed = 0
 
-    # フォントサイズ調整ループ (flyermaker.pyからの主要ロジック)
     for iteration in range(max_adjustment_iterations):
         try:
-            # selected_font_path_for_pil を使用
             font_title_month = ImageFont.truetype(selected_font_path_for_pil, current_font_size_title_month) if selected_font_path_for_pil else ImageFont.load_default().font_variant(size=current_font_size_title_month)
             font_band_name = ImageFont.truetype(selected_font_path_for_pil, current_font_size_band_name) if selected_font_path_for_pil else ImageFont.load_default().font_variant(size=current_font_size_band_name)
-            temp_font_schedule_for_check = ImageFont.truetype(selected_font_path_for_pil, current_font_size_schedule) if selected_font_path_for_pil else ImageFont.load_default().font_variant(size=current_font_size_schedule)
+            font_schedule_for_check = ImageFont.truetype(selected_font_path_for_pil, current_font_size_schedule) if selected_font_path_for_pil else ImageFont.load_default().font_variant(size=current_font_size_schedule)
             font_free_text = ImageFont.truetype(selected_font_path_for_pil, current_font_size_free_text) if selected_font_path_for_pil else ImageFont.load_default().font_variant(size=current_font_size_free_text)
 
         except Exception as e:
-            print(f"Font loading error during adjustment: {e}. Using default font.")
-            font_title_month = ImageFont.load_default().font_variant(size=current_font_size_title_month)
-            font_band_name = ImageFont.load_default().font_variant(size=current_font_size_band_name)
-            temp_font_schedule_for_check = ImageFont.load_default().font_variant(size=current_font_size_schedule)
-            font_free_text = ImageFont.load_default().font_variant(size=current_font_size_free_text)
+            print(f"Font loading error during adjustment: {e}. Attempting fallback.")
+            if selected_font_path_for_pil: 
+                selected_font_path_for_pil = None 
+                print("Switched to Pillow's default font for calculation.")
+                continue 
+            else: 
+                print("Could not load any font. Exiting font adjustment loop.")
+                break
 
         temp_draw_for_height_calc = ImageDraw.Draw(Image.new('RGB', (1, 1)))
 
         combined_title_text = f"{title_text} {month_display_text}"
-        title_height = temp_draw_for_height_calc.textbbox((0,0), combined_title_text, font=font_title_month)[3] - temp_draw_for_height_calc.textbbox((0,0), combined_title_text, font=font_title_month)[1]
+        title_bbox = temp_draw_for_height_calc.textbbox((0,0), combined_title_text, font=font_title_month)
+        title_height = title_bbox[3] - title_bbox[1]
 
-        band_name_height = temp_draw_for_height_calc.textbbox((0,0), band_name, font=font_band_name)[3] - temp_draw_for_height_calc.textbbox((0,0), band_name, font=font_band_name)[1]
+        band_name_bbox = temp_draw_for_height_calc.textbbox((0,0), band_name, font=font_band_name)
+        band_name_height = band_name_bbox[3] - band_name_bbox[1]
 
         artist_photo_height = 0
         artist_photo_max_width = width - (horizontal_padding * 2)
         if artist_photo and artist_photo.filename:
-            # アップロードされたファイルをメモリ上で処理
+            artist_photo.stream.seek(0) 
             try:
-                # stream.seek(0) は generate_flyer の冒頭で一度行うだけで良い
                 artist_photo_img_temp = Image.open(artist_photo.stream).convert("RGBA")
                 target_width = artist_photo_max_width * artist_photo_scale_factor
                 if artist_photo_img_temp.width > target_width:
@@ -256,44 +346,49 @@ def generate_flyer():
                 else:
                     artist_photo_height = artist_photo_img_temp.height
             except Exception as e:
-                print(f"Error processing uploaded image: {e}")
-                # エラー時は画像を無視
-        photo_area_height = artist_photo_height
+                print(f"Error processing uploaded image for height calculation: {e}")
+                artist_photo_height = 0 
+        photo_area_height = artist_photo_height 
 
         total_schedule_height_calc = 0
-        min_schedule_font_size_for_width = initial_font_size_schedule
+        min_schedule_font_size_for_width = current_font_size_schedule 
 
         schedule_items_parsed = []
-        for s in schedules:
-            parts = s.split(' ', 1)
-            date_day = parts[0]
-            venue = parts[1] if len(parts) > 1 else ""
-            schedule_items_parsed.append({'date_day': date_day, 'venue': venue})
-
+        for s_line in schedules:
+            # 日付(曜日)とそれ以降（会場）を分ける
+            match = re.match(r'(\d+ ?\(.\))?\s*(.*)', s_line) 
+            if match:
+                date_day_part = match.group(1) if match.group(1) else ""
+                venue_part = match.group(2) if match.group(2) else s_line 
+                schedule_items_parsed.append({'date_day': date_day_part.strip(), 'venue_text': venue_part.strip()})
+            else: 
+                schedule_items_parsed.append({'date_day': '', 'venue_text': s_line.strip()})
+        
         for s_item in schedule_items_parsed:
             date_day_text = s_item['date_day']
-            venue_text = s_item['venue']
+            venue_text = s_item['venue_text'] 
 
             temp_check_font_size = min_schedule_font_size_for_width
 
             while temp_check_font_size >= min_font_size_schedule:
                 temp_check_font = ImageFont.truetype(selected_font_path_for_pil, temp_check_font_size) if selected_font_path_for_pil else ImageFont.load_default().font_variant(size=temp_check_font_size)
+                
                 date_width = temp_draw_for_height_calc.textlength(date_day_text, font=temp_check_font)
                 venue_width = temp_draw_for_height_calc.textlength(venue_text, font=temp_check_font)
 
+                current_item_total_width = date_width + schedule_part_gap + venue_width
+
                 if len(schedules) > SCHEDULE_TWO_COLUMN_THRESHOLD:
                     col_total_width = width - (horizontal_padding * 2)
-                    col_gap_actual = 80
-                    col_width_per_item = (col_total_width - col_gap_actual) / 2
-                    current_item_total_width = date_width + schedule_part_gap + venue_width
+                    col_gap_actual = 80 
+                    col_width_per_item = (col_total_width - col_gap_actual) / 2 
                     if current_item_total_width <= col_width_per_item:
-                        break
+                        break 
                 else:
-                    current_item_total_width = date_width + schedule_part_gap + venue_width
                     if current_item_total_width <= (width - (horizontal_padding * 2)):
-                        break
+                        break 
 
-                temp_check_font_size -= 1
+                temp_check_font_size -= 1 
 
             min_schedule_font_size_for_width = min(min_schedule_font_size_for_width, temp_check_font_size)
 
@@ -301,7 +396,8 @@ def generate_flyer():
         current_font_size_schedule = max(min_font_size_schedule, current_font_size_schedule)
 
         font_schedule_for_calc_height = ImageFont.truetype(selected_font_path_for_pil, current_font_size_schedule) if selected_font_path_for_pil else ImageFont.load_default().font_variant(size=current_font_size_schedule)
-        schedule_line_base_height = temp_draw_for_height_calc.textbbox((0,0), "A", font=font_schedule_for_calc_height)[3] - temp_draw_for_height_calc.textbbox((0,0), "A", font=font_schedule_for_calc_height)[1]
+        schedule_bbox = temp_draw_for_height_calc.textbbox((0,0), "A", font=font_schedule_for_calc_height)
+        schedule_line_base_height = schedule_bbox[3] - schedule_bbox[1]
 
         current_schedule_item_height_calc = schedule_line_base_height + schedule_line_gap
 
@@ -315,25 +411,29 @@ def generate_flyer():
         free_text_area_height_calc = 0
         if free_text:
             free_text_max_width = width - (horizontal_padding * 2)
+            
             temp_wrapped_lines = []
             for line in free_text.split('\n'):
-                words = line.split(' ')
+                if not line.strip(): 
+                    temp_wrapped_lines.append("")
+                    continue
+
                 current_wrapped_line = ""
-                for word in words:
-                    test_line = current_wrapped_line + (" " if current_wrapped_line else "") + word
+                for char in line:
+                    test_line = current_wrapped_line + char
                     if temp_draw_for_height_calc.textlength(test_line, font=font_free_text) <= free_text_max_width:
                         current_wrapped_line = test_line
                     else:
-                        if current_wrapped_line:
-                            temp_wrapped_lines.append(current_wrapped_line)
-                        current_wrapped_line = word
-                if current_wrapped_line.strip():
-                    temp_wrapped_lines.append(current_wrapped_line.strip())
+                        temp_wrapped_lines.append(current_wrapped_line)
+                        current_wrapped_line = char 
+                if current_wrapped_line.strip() or current_wrapped_line == "": 
+                    temp_wrapped_lines.append(current_wrapped_line)
             free_text_display_lines = temp_wrapped_lines
 
             if free_text_display_lines:
                 for i, line_item in enumerate(free_text_display_lines):
-                    line_height_for_calc = temp_draw_for_height_calc.textbbox((0,0), "A", font=font_free_text)[3] - temp_draw_for_height_calc.textbbox((0,0), "A", font=font_free_text)[1]
+                    line_bbox = temp_draw_for_height_calc.textbbox((0,0), "A", font=font_free_text)
+                    line_height_for_calc = line_bbox[3] - line_bbox[1]
                     free_text_area_height_calc += line_height_for_calc
                     if i < len(free_text_display_lines) - 1:
                         free_text_area_height_calc += free_text_line_gap
@@ -348,7 +448,7 @@ def generate_flyer():
             total_content_height_needed += gap_schedule_free + free_text_area_height_calc
 
         if total_content_height_needed <= height:
-            break
+            break 
 
         if current_font_size_schedule > min_font_size_schedule:
             current_font_size_schedule = max(min_font_size_schedule, current_font_size_schedule - 2)
@@ -359,7 +459,7 @@ def generate_flyer():
         elif current_font_size_title_month > min_font_size_title_month:
             current_font_size_title_month -= 2
         else:
-            print("Warning: Font size scaled to minimum, but content may still not fit.")
+            print("Warning: All font sizes scaled to minimum, but content may still not fit.")
             break
 
     vertical_margin = (height - total_content_height_needed) / 2
@@ -371,34 +471,30 @@ def generate_flyer():
 
     y_current_offset = vertical_margin
 
-    # --- 画像の描画 ---
-    img = Image.new('RGB', (width, height), color=(0, 0, 0))
+    img = Image.new('RGB', (width, height), color=background_color_hex)
     d = ImageDraw.Draw(img)
 
-    # 描画時のフォントサイズは調整後のものを使用
     font_title_month = ImageFont.truetype(selected_font_path_for_pil, current_font_size_title_month) if selected_font_path_for_pil else ImageFont.load_default().font_variant(size=current_font_size_title_month)
     font_band_name = ImageFont.truetype(selected_font_path_for_pil, current_font_size_band_name) if selected_font_path_for_pil else ImageFont.load_default().font_variant(size=current_font_size_band_name)
     font_schedule_render = ImageFont.truetype(selected_font_path_for_pil, current_font_size_schedule) if selected_font_path_for_pil else ImageFont.load_default().font_variant(size=current_font_size_schedule)
     font_free_text = ImageFont.truetype(selected_font_path_for_pil, current_font_size_free_text) if selected_font_path_for_pil else ImageFont.load_default().font_variant(size=current_font_size_free_text)
 
+    combined_title_text = f"{title_text} {month_display_text}"
+    title_text_bbox = d.textbbox((0,0), combined_title_text, font=font_title_month)
+    title_text_width = title_text_bbox[2] - title_text_bbox[0]
+    title_x = (width - title_text_width) / 2
+    d.text((int(title_x), int(y_current_offset)), combined_title_text, fill=text_color_hex, font=font_title_month)
+    y_current_offset += (title_text_bbox[3] - title_text_bbox[1]) + gap_title_band
 
-    title_width = d.textlength(title_text, font=font_title_month)
-    month_width = d.textlength(month_display_text, font=font_title_month)
-    combined_width = title_width + 60 + month_width
-    start_x = (width - combined_width) / 2
-    d.text((int(start_x), int(y_current_offset)), title_text, fill=(255, 255, 255), font=font_title_month)
-    d.text((int(start_x + title_width + 60), int(y_current_offset)), month_display_text, fill=(255, 255, 255), font=font_title_month)
-    y_current_offset += title_height + gap_title_band
-
-    band_name_text_width = d.textlength(band_name, font=font_band_name)
-    start_x = (width - band_name_text_width) / 2
-    d.text((int(start_x), int(y_current_offset)), band_name, fill=(255, 255, 255), font=font_band_name)
-    y_current_offset += band_name_height + gap_band_photo
+    band_name_text_bbox = d.textbbox((0,0), band_name, font=font_band_name)
+    band_name_text_width = band_name_text_bbox[2] - band_name_text_bbox[0]
+    band_name_x = (width - band_name_text_width) / 2
+    d.text((int(band_name_x), int(y_current_offset)), band_name, fill=text_color_hex, font=font_band_name)
+    y_current_offset += (band_name_text_bbox[3] - band_name_text_bbox[1]) + gap_band_photo
 
     if artist_photo and artist_photo.filename:
+        artist_photo.stream.seek(0)
         try:
-            # stream.seek(0) は generate_flyer の冒頭で一度行うだけで良い
-            artist_photo.stream.seek(0) # ストリームの読み取り位置を先頭に戻す (再読込に備える)
             artist_photo_img = Image.open(artist_photo.stream).convert("RGBA")
 
             target_width = artist_photo_max_width * artist_photo_scale_factor
@@ -411,11 +507,8 @@ def generate_flyer():
             y_current_offset += artist_photo_img.height + gap_photo_schedule
         except Exception as e:
             print(f"Error drawing uploaded image: {e}")
-    elif artist_photo and not artist_photo.filename: # ファイルが選択されていないが、オブジェクトは存在する場合
-        pass # 何もしない
-    else: # ファイルがアップロードされていない場合
+    else:
          print("No artist photo uploaded.")
-
 
     schedule_y_start_for_draw = y_current_offset
     schedule_line_height_for_draw = d.textbbox((0,0), "A", font=font_schedule_render)[3] - d.textbbox((0,0), "A", font=font_schedule_render)[1]
@@ -427,35 +520,39 @@ def generate_flyer():
 
         col_total_width = width - (horizontal_padding * 2)
         col_gap_actual = 80
+        col_width_per_item = (col_total_width - col_gap_actual) / 2
 
         for i in range(max(len(col1_items), len(col2_items))):
             current_y_for_draw = int(schedule_y_start_for_draw + i * (schedule_line_height_for_draw + schedule_line_gap))
 
             if i < len(col1_items):
                 date_day_text = col1_items[i]['date_day']
-                venue_text = col1_items[i]['venue']
+                venue_text = col1_items[i]['venue_text'] 
 
                 date_width = d.textlength(date_day_text, font=font_schedule_render)
-                x_venue = int(horizontal_padding + date_width + schedule_part_gap)
+                
+                x_date_col1 = horizontal_padding
+                x_venue_col1 = int(x_date_col1 + date_width + schedule_part_gap)
 
-                d.text((horizontal_padding, current_y_for_draw), date_day_text, fill=(255, 255, 255), font=font_schedule_render)
-                d.text((x_venue, current_y_for_draw), venue_text, fill=(255, 255, 255), font=font_schedule_render)
+                d.text((x_date_col1, current_y_for_draw), date_day_text, fill=text_color_hex, font=font_schedule_render)
+                d.text((x_venue_col1, current_y_for_draw), venue_text, fill=text_color_hex, font=font_schedule_render)
 
             if i < len(col2_items):
                 date_day_text = col2_items[i]['date_day']
-                venue_text = col2_items[i]['venue']
+                venue_text = col2_items[i]['venue_text'] 
 
                 date_width = d.textlength(date_day_text, font=font_schedule_render)
 
-                col2_x_start = horizontal_padding + col_total_width / 2 + col_gap_actual / 2 
-                x_venue_col2 = int(col2_x_start + date_width + schedule_part_gap)
+                col2_x_start = horizontal_padding + col_width_per_item + col_gap_actual
+                x_date_col2 = col2_x_start
+                x_venue_col2 = int(x_date_col2 + date_width + schedule_part_gap)
 
-                d.text((int(col2_x_start), current_y_for_draw), date_day_text, fill=(255, 255, 255), font=font_schedule_render)
-                d.text((x_venue_col2, current_y_for_draw), venue_text, fill=(255, 255, 255), font=font_schedule_render)
+                d.text((int(x_date_col2), current_y_for_draw), date_day_text, fill=text_color_hex, font=font_schedule_render)
+                d.text((x_venue_col2, current_y_for_draw), venue_text, fill=text_color_hex, font=font_schedule_render)
     else:
         for i, schedule_item in enumerate(schedule_items_parsed):
             date_day_text = schedule_item['date_day']
-            venue_text = schedule_item['venue']
+            venue_text = schedule_item['venue_text'] 
             current_y_for_draw = int(schedule_y_start_for_draw + i * (schedule_line_height_for_draw + schedule_line_gap))
 
             date_width = d.textlength(date_day_text, font=font_schedule_render)
@@ -468,8 +565,8 @@ def generate_flyer():
             x_date = x_start_item_for_draw
             x_venue = x_start_item_for_draw + date_width + schedule_part_gap
 
-            d.text((int(x_date), current_y_for_draw), date_day_text, fill=(255, 255, 255), font=font_schedule_render)
-            d.text((int(x_venue), current_y_for_draw), venue_text, fill=(255, 255, 255), font=font_schedule_render)
+            d.text((int(x_date), current_y_for_draw), date_day_text, fill=text_color_hex, font=font_schedule_render)
+            d.text((int(x_venue), current_y_for_draw), venue_text, fill=text_color_hex, font=font_schedule_render)
 
     y_current_offset = schedule_y_start_for_draw + total_schedule_height_calc + gap_schedule_free
 
@@ -477,24 +574,21 @@ def generate_flyer():
     if free_text_display_lines:
         for i, wrapped_line_item in enumerate(free_text_display_lines):
             line_width = d.textlength(wrapped_line_item, font=font_free_text)
-            line_x = (width - line_width) / 2
-            line_height_for_draw = d.textbbox((0,0), "A", font=font_free_text)[3] - d.textbbox((0,0), "A", font=font_free_text)[1]
-            d.text((int(line_x), int(current_free_text_y_for_draw)), wrapped_line_item, fill=(255, 255, 255), font=font_free_text)
+            line_x = (width - line_width) / 2 
+            line_bbox = d.textbbox((0,0), "A", font=font_free_text)
+            line_height_for_draw = line_bbox[3] - line_bbox[1]
+            d.text((int(line_x), int(current_free_text_y_for_draw)), wrapped_line_item, fill=text_color_hex, font=font_free_text)
             current_free_text_y_for_draw += line_height_for_draw
             if i < len(free_text_display_lines) - 1:
                 current_free_text_y_for_draw += free_text_line_gap
 
-    # 画像をメモリに保存し、レスポンスとして返す
     img_io = io.BytesIO()
     img.save(img_io, format='PNG')
     img_io.seek(0)
 
-    # ファイル名を生成
     file_name = f"{band_name}_{month_str}月ライブスケジュール_A4.png"
 
     return send_file(img_io, mimetype='image/png', as_attachment=True, download_name=file_name)
 
 if __name__ == '__main__':
-    # 開発時にはデバッグモードを有効にすると便利です
-    # 本番環境（Render.com）では無効にしてください
     app.run(debug=True)
