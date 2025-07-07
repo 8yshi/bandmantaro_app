@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ライブスケジュールフライヤー作成</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 20px; /* 上部に少し余白を追加 */
+            margin-bottom: 20px; /* 下部に少し余白を追加 */
+        }
+        h1 {
+            text-align: center;
+            color: #0056b3;
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="file"],
+        select,
+        textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .schedule-item {
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .schedule-item label, .schedule-item input, .schedule-item select {
+            display: inline-block;
+            width: auto;
+            margin-right: 10px;
+        }
+        .schedule-item input[type="text"] {
+            width: 150px;
+        }
+        .schedule-item select {
+            width: auto;
+        }
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        input[type="range"] {
+            width: calc(100% - 20px);
+            margin-bottom: 15px;
+        }
+
+        /* トップに戻るボタンのスタイル */
+        .back-to-top-button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-bottom: 20px; /* フォームとの間に余白 */
+            background-color: #555; /* 暗めの色 */
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .back-to-top-button:hover {
+            background-color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-to-top-button">← トップに戻る</a>
+
+        <h1>ライブスケジュールフライヤー作成</h1>
+        <form action="/generate" method="post" enctype="multipart/form-data">
+            <label for="band_name">バンド名:</label>
+            <input type="text" id="band_name" name="band_name" value="あなたのバンド名" required>
+
+            <label for="month">対象月:</label>
+            <select id="month" name="month" required>
+                {% for m in month_options %}
+                    <option value="{{ m }}" {% if m == current_month %}selected{% endif %}>{{ m }}月</option>
+                {% endfor %}
+            </select>
+
+            <label>アーティスト写真 (推奨: 横長):</label>
+            <input type="file" id="artist_photo" name="artist_photo" accept="image/*">
+
+            <label for="photo_scale">写真サイズ調整:</label>
+            <input type="range" id="photo_scale" name="photo_scale" min="0.1" max="1.0" step="0.05" value="0.7">
+
+            <label for="font_selection">日本語フォント選択:</label>
+            <select id="font_selection" name="selected_font_path" required>
+                {% for font in japanese_font_options %}
+                    <option value="{{ font.path }}" {% if font.name == default_selected_font_name %}selected{% endif %}>{{ font.name }}</option>
+                {% endfor %}
+            </select>
+            <p style="font-size: 0.8em; color: gray; margin-top: -10px; margin-bottom: 15px;">※文字化けする場合は、別のフォントをお試しください。</p>
+
+            <div id="schedule-inputs">
+                <h2>ライブスケジュール入力</h2>
+                <div class="schedule-item">
+                    <label>会場名:</label>
+                    <input type="text" name="venue_0" placeholder="例: 赤坂 Navey Floor">
+                    <label>日付:</label>
+                    <select name="date_0">
+                        {% for d in date_options %}
+                            <option value="{{ d }}" {% if d == current_date %}selected{% endif %}>{{ d }}</option>
+                        {% endfor %}
+                    </select>
+                    <label>曜日:</label>
+                    <select name="day_of_week_0">
+                        {% for dw in day_of_week_options %}
+                            <option value="{{ dw }}" {% if dw == current_day_of_week %}selected{% endif %}>{{ dw }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <input type="hidden" id="schedule_count" name="schedule_count" value="1">
+
+            <div class="button-group">
+                <button type="button" onclick="addScheduleInput()">スケジュール追加</button>
+                <button type="button" onclick="removeLastScheduleInput()">スケジュール削除</button>
+            </div>
+
+            <label for="free_text">その他 (注意事項、SNSなど):</label>
+            <textarea id="free_text" name="free_text" rows="5">X:@MantaCrantz</textarea>
+            <div class="button-group">
+                <button type="submit">フライヤー生成</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let scheduleCount = 1;
+        const dateOptions = [
+            {% for d in date_options %}
+                "{{ d }}",
+            {% endfor %}
+        ];
+        const dayOfWeekOptions = [
+            {% for dw in day_of_week_options %}
+                "{{ dw }}",
+            {% endfor %}
+        ];
+        const currentDayOfWeek = "{{ current_day_of_week }}";
+
+        function addScheduleInput() {
+            const scheduleInputsDiv = document.getElementById('schedule-inputs');
+            const newItemDiv = document.createElement('div');
+            newItemDiv.classList.add('schedule-item');
+            newItemDiv.innerHTML = `
+                <label>会場名:</label>
+                <input type="text" name="venue_${scheduleCount}" placeholder="例: 赤坂 Navey Floor">
+                <label>日付:</label>
+                <select name="date_${scheduleCount}">
+                    ${dateOptions.map(d => `<option value="${d}">${d}</option>`).join('')}
+                </select>
+                <label>曜日:</label>
+                <select name="day_of_week_${scheduleCount}">
+                    ${dayOfWeekOptions.map(dw => `<option value="${dw}" ${dw === currentDayOfWeek ? 'selected' : ''}>${dw}</option>`).join('')}
+                </select>
+            `;
+            scheduleInputsDiv.appendChild(newItemDiv);
+            scheduleCount++;
+            document.getElementById('schedule_count').value = scheduleCount;
+        }
+
+        function removeLastScheduleInput() {
+            const scheduleInputsDiv = document.getElementById('schedule-inputs');
+            if (scheduleCount > 1) { // 少なくとも1つは残す
+                scheduleInputsDiv.removeChild(scheduleInputsDiv.lastChild);
+                scheduleCount--;
+                document.getElementById('schedule_count').value = scheduleCount;
+            }
+        }
+    </script>
+</body>
+</html>
