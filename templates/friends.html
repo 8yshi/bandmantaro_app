@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>バンドマン太郎のお友達</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px 50px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #0056b3;
+            margin-bottom: 30px;
+        }
+        .back-to-top-button {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .back-to-top-button:hover {
+            background-color: #5a6268;
+        }
+
+        .band-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center; /* 中央寄せ */
+            gap: 25px; /* アイテム間の余白を少し広げる */
+            margin-top: 20px;
+        }
+        .band-item {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            width: calc(33% - 25px); /* 3列表示（gap考慮） */
+            box-sizing: border-box;
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+            color: #333;
+            display: flex; /* flexboxで中身を制御 */
+            flex-direction: column;
+            justify-content: space-between; /* コンテンツを上下に分割 */
+            align-items: center;
+        }
+        .band-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        .band-logo {
+            width: 100px; /* ロゴ画像のサイズ */
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            border: 3px solid #3498db;
+        }
+        .band-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .band-genre {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .social-links {
+            margin-top: 10px;
+        }
+        .social-links a {
+            display: inline-block;
+            margin: 0 5px;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.2s ease;
+        }
+        .social-links a:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .band-item {
+                width: calc(50% - 20px); /* 2列表示 */
+                padding: 15px;
+            }
+        }
+        @media (max-width: 480px) {
+            .band-item {
+                width: 90%; /* 1列表示 */
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button type="button" onclick="location.href='/'" class="back-to-top-button">← トップに戻る</button>
+        <h1>バンドマン太郎のお友達</h1>
+        <p>バンドマン太郎を支援してくださる、素敵なバンドやアーティストさんをご紹介します！</p>
+        <p><small>支援してくださる方の情報を掲載する制度を検討中です。</small></p>
+
+        <div class="band-list">
+            {# JSONから読み込まれたバンドデータをループして表示 #}
+            {% for band in bands %}
+            <div class="band-item">
+                {# ロゴ画像はstaticフォルダから読み込む #}
+                <img src="{{ url_for('static', filename=band.logo) }}" alt="{{ band.name }} ロゴ" class="band-logo">
+                <p class="band-name">{{ band.name }}</p>
+                <span class="band-genre">ジャンル：{{ band.genre }}</span>
+                <div class="social-links">
+                    {% for link in band.social_links %}
+                        <a href="{{ link.url }}" target="_blank">{{ link.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <p>現在、紹介できるバンド情報はありません。</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

@@ -22,35 +22,35 @@
             padding: 40px 60px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            max-width: 800px; /* コンテナの最大幅を少し広げた */
+            max-width: 800px;
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        
+
         .header-content {
-            display: flex; /* ★変更: flexbox を使用 */
-            justify-content: space-between; /* ★変更: 両端に配置 */
-            align-items: center; /* ★変更: 垂直方向中央揃え */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             width: 100%;
-            padding-bottom: 20px; /* 下にスペース */
-            border-bottom: 1px solid #eee; /* 下線を追加して区切りを分かりやすく */
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
             margin-bottom: 30px;
-            flex-wrap: wrap; /* 小さい画面で折り返す */
+            flex-wrap: wrap;
         }
 
         .header-left {
-            text-align: left; /* ★変更: 左寄せ */
-            flex-grow: 1; /* ★追加: スペースがあれば広がる */
-            min-width: 250px; /* ★追加: 最小幅を確保 */
+            text-align: left;
+            flex-grow: 1;
+            min-width: 250px;
         }
 
         h1 {
             color: #2c3e50;
             font-size: 3em;
             margin: 0;
-            line-height: 1.2; /* 行の高さを調整 */
+            line-height: 1.2;
         }
         p.subtitle {
             color: #7f8c8d;
@@ -63,17 +63,17 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-left: 20px; /* ★変更: 左側に余白 */
-            min-width: 120px; /* ★追加: 最小幅を確保 */
+            margin-left: 20px;
+            min-width: 120px;
         }
 
         .boy-image {
-            width: 100px; /* 画像のサイズを維持 */
+            width: 100px;
             height: auto;
             display: block;
             margin-bottom: 5px;
-            border-radius: 50%; /* 画像を丸くする */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 影を追加 */
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .about-link {
@@ -90,8 +90,8 @@
 
         .menu-button {
             display: block;
-            width: 550px; /* ボタンの固定幅 */
-            max-width: 100%; /* コンテナからはみ出さないように */
+            width: 550px;
+            max-width: 100%;
             padding: 15px 30px;
             margin: 10px 0;
             background-color: #3498db;
@@ -110,35 +110,82 @@
             background-color: #2980b9;
         }
 
+        /* バンドマン太郎の友達セクション */
+        .friends-section {
+            width: 100%;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+        .friends-section h2 {
+            color: #2c3e50;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        /* .friends-list は不要になるため、削除またはコメントアウト */
+        /* .friend-item も画像がないため、menu-button スタイルに寄せるか、別途シンプルに定義 */
+        
+        /* 友達リストのボタン用スタイル (menu-buttonを流用) */
+        .friends-menu-button {
+            display: block;
+            width: 550px;
+            max-width: 100%;
+            padding: 15px 30px;
+            margin: 10px auto; /* 中央寄せ */
+            background-color: #5cb85c; /* 緑系の色に変更 */
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-sizing: border-box;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .friends-menu-button:hover {
+            background-color: #4cae4c; /* ホバー時の色 */
+        }
+
+
         /* レスポンシブ対応 */
         @media (max-width: 768px) {
             .container {
                 padding: 30px;
             }
             .header-content {
-                flex-direction: column; /* 縦並びにする */
-                align-items: center; /* 中央揃え */
+                flex-direction: column;
+                align-items: center;
                 text-align: center;
             }
             .header-left {
-                margin-bottom: 20px; /* 下に余白 */
+                margin-bottom: 20px;
                 text-align: center;
-                min-width: unset; /* 最小幅をリセット */
+                min-width: unset;
             }
             .header-right {
-                margin-left: 0; /* 余白をリセット */
-                margin-top: 10px; /* 上に余白 */
+                margin-left: 0;
+                margin-top: 10px;
             }
             h1 {
-                font-size: 2.5em; /* フォントサイズを小さく */
+                font-size: 2.5em;
             }
             p.subtitle {
-                font-size: 1em; /* フォントサイズを小さく */
+                font-size: 1em;
             }
-            .menu-button {
-                width: 90%; /* 幅を90%にする */
-                padding: 12px 20px; /* パディングを小さく */
-                font-size: 1em; /* フォントサイズを小さく */
+            .menu-button, .friends-menu-button { /* 両方のボタンに適用 */
+                width: 90%;
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+            .friends-section {
+                margin-top: 30px;
+                padding-top: 20px;
+            }
+            .friends-section h2 {
+                font-size: 1.8em;
             }
         }
 
@@ -170,5 +217,13 @@
 
         <a href="/flyer_maker" class="menu-button">ライブスケジュールフライヤー作成ツール</a>
         <a href="/sns_announcement" class="menu-button">SNS告知文作成ツール</a>
+        <div class="friends-section">
+            <h2>バンドマン太郎のお友達</h2>
+            <a href="/friends" class="friends-menu-button">お友達リストを見る</a>
+            <p style="margin-top: 30px; color: #555;">
+                <small>※ このスペースに、バンドマン太郎を支援してくださるバンドやアーティストさんの紹介を掲載できます。詳細は後日公開！</small>
+            </p>
+        </div>
+    </div>
 </body>
 </html>

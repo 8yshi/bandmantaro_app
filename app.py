@@ -4,9 +4,10 @@ import re
 from flask import Flask, render_template, request, send_file
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime, timedelta
-import calendar # ★追加: calendarモジュールをインポート
+import calendar # calendarモジュールをインポート
 import math
 import platform
+import json # jsonモジュールをインポート
 
 app = Flask(__name__)
 
@@ -15,11 +16,30 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# データファイルのパスを定義
+DATA_DIR = os.path.join(app.root_path, 'data')
+BANDS_DATA_FILE = os.path.join(DATA_DIR, 'bands.json')
+
+# バンド情報をJSONファイルから読み込む関数
+def load_friends_bands():
+    if not os.path.exists(BANDS_DATA_FILE):
+        print(f"Warning: Data file not found at {BANDS_DATA_FILE}. Returning empty list.")
+        return [] # ファイルがない場合は空のリストを返す
+    try:
+        with open(BANDS_DATA_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON from {BANDS_DATA_FILE}: {e}")
+        return [] # JSON形式が不正な場合も空のリストを返す
+    except Exception as e:
+        print(f"Error reading {BANDS_DATA_FILE}: {e}")
+        return []
+
 # --- 日本語フォントをサーバー上で見つけるための関数 ---
 def find_japanese_fonts():
     found_fonts = {}
     
-    # ★修正: プロジェクトのルートにある 'fonts' フォルダを指すように変更
+    #  プロジェクトのルートにある 'fonts' フォルダを指すように変更
     base_fonts_dir = os.path.join(app.root_path, 'fonts') 
     
     search_paths = [base_fonts_dir]
@@ -101,7 +121,7 @@ def flyer_maker_form():
     today = datetime.now()
     current_year = today.year
     
-    # ★変更: 選択式の日付リストを生成
+    # 選択式の日付リストを生成
     # 指定された月の最終日を取得
     num_days = calendar.monthrange(current_year, current_month_num)[1]
     date_options = [str(i) for i in range(1, num_days + 1)]
@@ -590,5 +610,23 @@ def generate_flyer():
 
     return send_file(img_io, mimetype='image/png', as_attachment=True, download_name=file_name)
 
+
+@app.route('/friends')
+def friends_page():
+    """
+    バンドマン太郎の友達（支援バンド紹介）ページを表示します。
+    """
+    bands_data = load_friends_bands() # JSONからバンド情報を読み込む
+    return render_template('friends.html', bands=bands_data) # テンプレートに渡す
+
+
 if __name__ == '__main__':
+     # dataディレクトリが存在しない場合は作成
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
+    # bands.jsonが存在しない場合は空のリストで初期化（任意、初回起動時のみ）
+    if not os.path.exists(BANDS_DATA_FILE):
+        with open(BANDS_DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump([], f, ensure_ascii=False, indent=4)
+            print(f"Created empty {BANDS_DATA_FILE}")
     app.run(debug=True)

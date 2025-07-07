@@ -41,7 +41,7 @@
         }
         input[type="text"],
         input[type="file"],
-        select, /* ★変更: select も対象に追加 */
+        select,
         textarea {
             width: calc(100% - 22px); 
             padding: 10px;
@@ -65,7 +65,7 @@
         }
         input[type="color"]:hover {
             border-color: #999;
-            box-shadow: 0 3px 8px rgba[0,0,0,0.2);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
         }
         .color-picker-group {
             display: flex;
@@ -92,15 +92,14 @@
             margin-bottom: 10px;
             align-items: center; 
         }
-        .schedule-item input[type="text"], /* テキスト入力と */
-        .schedule-item select { /* select も対象 */
+        .schedule-item input[type="text"],
+        .schedule-item select {
             margin-bottom: 0; 
             font-size: 0.95em; 
             padding: 8px; 
-            height: 35px; /* 高さを揃える */
+            height: 35px; 
         }
         
-        /* ★変更: select 要素の flex-grow も調整 */
         .schedule-item select[name="schedule_date_num[]"] {
             flex-grow: 1; 
             min-width: 50px;
@@ -151,7 +150,9 @@
         button[type="submit"]:hover {
             background-color: #0056b3;
         }
-        button:not([type="submit"]):not(.schedule-item button) { 
+        /* トップに戻るボタンにも適用する共通スタイル */
+        button:not([type="submit"]):not(.schedule-item button),
+        .back-to-top-button { /* ★変更: .back-to-top-button をここに追加 */
             background-color: #6c757d;
             color: white;
             padding: 10px 20px;
@@ -160,11 +161,17 @@
             cursor: pointer;
             font-size: 1em;
             transition: background-color 0.3s ease;
+            text-decoration: none; /* aタグの場合に下線を消す */
+            display: inline-block; /* aタグの場合にブロック要素化してpaddingを適用 */
+            margin-bottom: 20px; /* ここだけ個別に調整 */
         }
-        button:not([type="submit"]):not(.schedule-item button):hover {
+        /* トップに戻るボタンにも適用する共通ホバースタイル */
+        button:not([type="submit"]):not(.schedule-item button):hover,
+        .back-to-top-button:hover { /* ★変更: .back-to-top-button:hover をここに追加 */
             background-color: #5a6268;
         }
-
+        /* 元の .back-to-top-button スタイルは不要なので削除 */
+        /*
         .back-to-top-button {
             display: inline-block;
             padding: 10px 20px;
@@ -181,11 +188,12 @@
         .back-to-top-button:hover {
             background-color: #777;
         }
+        */
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="/" class="back-to-top-button">← トップに戻る</a>
+        <button type="button" onclick="location.href='/'" class="back-to-top-button">← トップに戻る</button>
 
         <h1>ライブスケジュールフライヤー作成</h1>
 
@@ -316,24 +324,21 @@
             if (itemToRemove.parentNode.children.length > 1) { 
                 itemToRemove.remove();
             } else {
-                // 最後の1つは削除しないが、内容を初期化する
                 const selects = itemToRemove.querySelectorAll('select');
-                selects.forEach(select => select.value = ''); // selectの値をクリア
+                selects.forEach(select => select.value = '');
                 const inputs = itemToRemove.querySelectorAll('input[type="text"]');
-                inputs.forEach(input => input.value = ''); // inputの値をクリア
+                inputs.forEach(input => input.value = '');
             }
         }
 
         function clearScheduleItems() {
             const container = document.getElementById('schedule-inputs');
             container.innerHTML = ''; 
-            addScheduleItem(); // 1つだけ空の項目を追加
-            // addScheduleItem()で追加した項目を、さらに空にする必要はない
+            addScheduleItem();
         }
         
         document.addEventListener('DOMContentLoaded', () => {
             const scheduleInputsContainer = document.getElementById('schedule-inputs');
-            // 初期ロード時にスケジュールが何もなければ、1つだけ追加
             if (scheduleInputsContainer.children.length === 0) {
                 addScheduleItem();
             }
