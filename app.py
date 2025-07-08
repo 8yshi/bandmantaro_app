@@ -9,6 +9,9 @@ import math
 import platform
 import json # jsonモジュールをインポート
 
+# ★追加: Blueprintをインポート
+from blueprints.set_diagram import set_diagram_bp
+
 app = Flask(__name__)
 
 UPLOAD_FOLDER = 'uploads'
@@ -95,6 +98,9 @@ def find_japanese_fonts():
 
     return final_font_list
 
+# ★追加: Blueprintを登録
+app.register_blueprint(set_diagram_bp)
+
 
 @app.route('/')
 def home():
@@ -160,6 +166,7 @@ def sns_announcement_form():
     """
     return render_template('sns_announcement_form.html')
 
+
 @app.route('/generate_sns_announcement', methods=['POST'])
 def generate_sns_announcement():
     """
@@ -174,49 +181,83 @@ def generate_sns_announcement():
     ticket_info = request.form.get('ticket_info', '').strip()
     ticket_link = request.form.get('ticket_link', '').strip()
     streaming_link = request.form.get('streaming_link', '').strip()
-    
+    performers = request.form.get('performers', '').strip() 
+
     selected_hashtags = request.form.getlist('hashtags') 
 
     announcement_parts = []
 
-    if live_date or live_day_of_week or venue: 
+    # 【Live Info】
+    # 日付 (曜日) 会場
+    if live_date or live_day_of_week or venue:
         announcement_parts.append("【Live Info】")
         date_venue_line = []
         if live_date:
             date_venue_line.append(live_date)
         if live_day_of_week:
-            date_venue_line.append(f"（{live_day_of_week}）")
+            # 曜日が入力されていれば、(月)のように括弧付きで追加
+            date_venue_line.append(f"({live_day_of_week})")
         if venue:
             date_venue_line.append(venue)
+        
+        # すべて空でなければ行を追加
         if date_venue_line:
             announcement_parts.append(" ".join(date_venue_line))
 
+    # ライブ名
     if live_name:
+        # 直前の要素がLive Infoの行なら、間に空行を入れない
+        # それ以外の場合は、前に空行を入れる
+        if announcement_parts and announcement_parts[-1] not in ["【Live Info】"]:
+            announcement_parts.append("") # 空行
         announcement_parts.append(f"『{live_name}』")
 
-    if open_time and start_time:
-        announcement_parts.append(f"OPEN / START {open_time} / {start_time}")
-    elif open_time: 
-        announcement_parts.append(f"OPEN {open_time}")
-    elif start_time: 
-        announcement_parts.append(f"START {start_time}")
+    # OPEN / START
+    if open_time or start_time:
+        announcement_parts.append("") # 空行
+        if open_time and start_time:
+            announcement_parts.append(f"OPEN / START {open_time} / {start_time}")
+        elif open_time:
+            announcement_parts.append(f"OPEN {open_time}")
+        elif start_time:
+            announcement_parts.append(f"START {start_time}")
 
+    # チケット情報
     if ticket_info:
+        announcement_parts.append("") # 空行
         announcement_parts.append(ticket_info)
-    if ticket_link:
-        announcement_parts.append(ticket_link)
     
+    # URL (チケットリンクと配信リンク)
+    url_added = False
+    if ticket_link:
+        if not url_added: announcement_parts.append("") # 空行
+        announcement_parts.append(ticket_link)
+        url_added = True
     if streaming_link:
+        if not url_added: announcement_parts.append("") # 空行
         announcement_parts.append(f"配信 {streaming_link}")
+        url_added = True
 
+    # 共演者
+    if performers:
+        announcement_parts.append("") # 空行
+        announcement_parts.append("w/")
+        # 共演者を改行区切りで追加
+        for performer_line in performers.split('\n'):
+            if performer_line.strip(): # 空行でなければ追加
+                announcement_parts.append(performer_line.strip())
+
+    # ハッシュタグ
     if selected_hashtags:
+        # 直前の要素が空行でなければ空行を追加
         if announcement_parts and announcement_parts[-1] != "":
-             announcement_parts.append("") 
+            announcement_parts.append("") # 空行
         announcement_parts.append(" ".join(selected_hashtags)) 
 
     generated_text = "\n".join(announcement_parts)
 
     return render_template('sns_announcement_form.html', generated_text=generated_text)
+
 
 @app.route('/generate_flyer', methods=['POST']) 
 def generate_flyer():

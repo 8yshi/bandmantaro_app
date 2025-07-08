@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>セット図作成ツール - バンドマン太郎</title>
+    <!-- 共通のスタイルシートを読み込む -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* ここにセット図作成ツール専用のCSSを追加します */
+        /* style.css で定義された共通スタイルを上書きしないように注意 */
+
+        /* mainタグのスタイルは共通化されているが、必要ならここで上書き可能 */
+        /* main {
+            padding: 20px;
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        } */
+
+        /* h2のフォントはstyle.cssで定義されたものを使用 */
+        h2 {
+            /* text-align: center; */ /* style.cssで定義済み */
+            color: #0056b3; /* 色はツール固有で維持 */
+            /* margin-bottom: 30px; */ /* style.cssで定義済み */
+        }
+
+        /* canvas関連のスタイルはそのまま */
+        #canvas-container {
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            max-height: 400px; /* 高さは固定 */
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .controls button {
+            padding: 10px 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #4CAF50; /* 緑系 */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            white-space: nowrap;
+            /* font-family: Arial, sans-serif; は style.cssでbodyに一括指定されるため不要 */
+        }
+        .controls button:hover {
+            background-color: #45a049;
+        }
+        .controls input[type="text"],
+        .controls input[type="number"],
+        .controls select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            flex-grow: 1;
+            max-width: 200px;
+            /* font-family: Arial, sans-serif; は style.cssでbodyに一括指定されるため不要 */
+        }
+        .controls label {
+            white-space: nowrap;
+            font-weight: bold;
+            color: #555;
+            /* font-family: Arial, sans-serif; は style.cssでbodyに一括指定されるため不要 */
+        }
+        #downloadBtn {
+            background-color: #007bff; /* 青系 */
+        }
+        #downloadBtn:hover {
+            background-color: #0056b3;
+        }
+        #clearBtn, #deleteBtn { /* クリアボタンと削除ボタン */
+            background-color: #dc3545; /* 赤系 */
+        }
+        #clearBtn:hover, #deleteBtn:hover {
+            background-color: #c82333;
+        }
+
+        #propertiesPanel {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fdfdfd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 10px 20px;
+            align-items: center;
+        }
+        #propertiesPanel h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            grid-column: 1 / -1;
+            /* font-family: Arial, sans-serif; は style.cssでbodyに一括指定されるため不要 */
+        }
+        #propertiesPanel div {
+            display: contents;
+        }
+        #propertiesPanel label {
+            font-weight: bold;
+            color: #333;
+            text-align: right;
+            /* font-family: Arial, sans-serif; は style.cssでbodyに一括指定されるため不要 */
+        }
+        #propertiesPanel input[type="text"],
+        #propertiesPanel input[type="number"],
+        #propertiesPanel input[type="color"] {
+            width: auto;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.95em;
+            /* font-family: Arial, sans-serif; は style.cssでbodyに一括指定されるため不要 */
+        }
+        #rectProps, #circleProps {
+            grid-column: 1 / -1;
+            display: contents;
+        }
+        #deleteBtn {
+            grid-column: 1 / -1;
+            margin-top: 15px;
+            justify-self: center;
+            width: 50%;
+            height: 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            /* font-family: Arial, sans-serif; は style.cssでbodyに一括指定されるため不要 */
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            main {
+                padding: 15px;
+                margin: 10px auto;
+            }
+            /* h2 のフォントサイズは style.css で共通化されているため、ここでは調整しない */
+            /* h2 {
+                font-size: 1.8em;
+                margin-bottom: 20px;
+            } */
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .controls button,
+            .controls input[type="text"],
+            .controls input[type="number"],
+            .controls select {
+                width: 100%;
+                max-width: unset;
+            }
+            #propertiesPanel {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+            #propertiesPanel label {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>バンドマン太郎</h1>
+        <nav>
+            <ul>
+                <!-- url_forのエンドポイント名はあなたのapp.pyの定義に合わせてください -->
+                <li><a href="{{ url_for('home') }}">トップに戻る</a></li>
+                <!-- 他のナビゲーションリンクもあればここに追加 -->
+                <li><a href="{{ url_for('flyer_maker_form') }}">フライヤー作成</a></li>
+                <li><a href="{{ url_for('sns_announcement_form') }}">SNS告知文作成</a></li>
+                <li><a href="{{ url_for('friends_page') }}">友達のバンド紹介</a></li>
+                <li><a href="{{ url_for('about_page') }}">バンドマン太郎とは？</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h2>セット図作成ツール</h2>
+
+        <div class="controls">
+            <button id="addRectBtn">楽器・機材 (四角) 追加</button>
+            <button id="addCircleBtn">人の立ち位置 (丸) 追加</button>
+            <button id="addMicBtn">マイク (矢印+丸) 追加</button>
+            <button id="clearBtn">全てクリア</button>
+            <button id="downloadBtn">画像としてダウンロード</button>
+            <label for="diagramName">ファイル名:</label>
+            <input type="text" id="diagramName" value="セット図" placeholder="例: ○○バンド ライブセット図">
+        </div>
+
+        <div id="canvas-container">
+            <canvas id="setDiagramCanvas"></canvas>
+        </div>
+
+        <div id="propertiesPanel" style="display:none;">
+            <h3>選択中の図形プロパティ</h3>
+            <div>
+                <label for="propText">テキスト:</label>
+                <input type="text" id="propText">
+            </div>
+            <div id="rectProps" style="display:none;">
+                <label for="propWidth">幅:</label>
+                <input type="number" id="propWidth" min="10">
+                <label for="propHeight">高さ:</label>
+                <input type="number" id="propHeight" min="10">
+            </div>
+            <div id="circleProps" style="display:none;">
+                <label for="propRadius">半径:</label>
+                <input type="number" id="propRadius" min="5">
+            </div>
+            <div>
+                <label for="propFillColor">塗りつぶし色:</label>
+                <input type="color" id="propFillColor">
+            </div>
+            <div>
+                <label for="propStrokeColor">枠線色:</label>
+                <input type="color" id="propStrokeColor">
+            </div>
+            <div>
+                <label for="propStrokeWidth">枠線幅:</label>
+                <input type="number" id="propStrokeWidth" min="0" value="2">
+            </div>
+            <div>
+                <label for="propRotation">回転角度 (°):</label>
+                <input type="number" id="propRotation" min="0" max="360" value="0">
+            </div>
+            <button id="deleteBtn">削除</button>
+        </div>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2024 バンドマン太郎</p>
+    </footer>
+
+    <!-- キャンバス操作のためのJavaScriptファイルを読み込む -->
+    <script src="{{ url_for('static', filename='js/set_diagram_maker.js') }}"></script>
+</body>
+</html>

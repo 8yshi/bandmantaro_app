@@ -1,0 +1,135 @@
+/* bandmantaro/static/css/style.css */
+
+/* 全体的な基本設定 */
+body {
+    font-family: Arial, sans-serif; /* サイト全体のデフォルトフォント */
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* ヘッダーの共通スタイル */
+header {
+    background-color: #333;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    flex-wrap: wrap; /* レスポンシブ対応 */
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8em; /* ヘッダータイトルのサイズ */
+    font-weight: bold;
+    color: white; /* ヘッダー内のh1は白 */
+}
+
+header nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap; /* レスポンシブ対応 */
+    justify-content: flex-end;
+}
+
+header nav ul li {
+    margin-left: 20px;
+}
+
+header nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 1em;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+    white-space: nowrap; /* テキストが改行されないように */
+}
+
+header nav ul li a:hover {
+    background-color: #575757;
+}
+
+/* メインコンテンツのコンテナ共通スタイル */
+.container {
+    background-color: #fff;
+    padding: 30px 50px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-width: 700px; /* ライブスケジュール作成と合わせる */
+    width: 100%;
+    box-sizing: border-box;
+    margin: 20px auto; /* 中央寄せ */
+}
+
+/* フォームタイトル (h1, h2) の共通スタイル */
+/* ライブスケジュール作成のh1とセット図作成のh2を揃えるため */
+h1, h2 {
+    font-family: Arial, sans-serif; /* 共通フォント */
+    text-align: center;
+    color: #0056b3; /* 共通の色 */
+    margin-bottom: 30px;
+}
+h1 { /* h1は少し大きめ */
+    font-size: 2.5em;
+}
+h2 { /* h2は少し小さめ */
+    font-size: 2em;
+}
+
+
+/* 「トップに戻る」ボタンの共通スタイル */
+.back-to-top-button {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+    text-decoration: none; /* aタグの場合に下線を消す */
+    display: inline-block; /* aタグの場合にブロック要素化してpaddingを適用 */
+    margin-bottom: 20px; /* ここだけ個別に調整 */
+}
+.back-to-top-button:hover {
+    background-color: #5a6268;
+}
+
+/* その他の共通フォーム部品やボタンのスタイルは、
+   各HTMLファイル内の <style> タグで定義されているものを
+   必要に応じてここに移動・統合してください。
+   今回は set_diagram_form.html のスタイルを優先して調整します。 */
+
+/* レスポンシブ対応の調整 */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    header nav ul {
+        justify-content: flex-start;
+        width: 100%;
+        margin-top: 10px;
+    }
+    header nav ul li {
+        margin-left: 0;
+        margin-right: 15px;
+        margin-bottom: 5px;
+    }
+    .container {
+        padding: 20px 30px;
+    }
+    h1 {
+        font-size: 2em;
+    }
+    h2 {
+        font-size: 1.5em;
+    }
+}

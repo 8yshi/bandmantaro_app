@@ -157,19 +157,32 @@
             <label for="streaming_link">配信URL (任意):</label>
             <input type="text" id="streaming_link" name="streaming_link" placeholder="例: https://twitcasting.tv/c:bluemy0108/shopcart/xxxxxx">
 
+            <div class="form-section">
+                <h3>共演者</h3>
+                <textarea id="performers" name="performers" rows="5" placeholder="共演者を一行ずつ入力してください&#10;例:&#10;バンド名A&#10;アーティスト名B&#10;バンド名C"></textarea>
+            </div>
+
             <label>ハッシュタグ選択:</label>
             <div class="checkbox-group">
-                <label><input type="checkbox" name="hashtags" value="#バンド名"> #バンド名</label>
-                <label><input type="checkbox" name="hashtags" value="#ライブ告知"> #ライブ告知</label>
-                <label><input type="checkbox" name="hashtags" value="#邦ロック"> #邦ロック</label>
-                <label><input type="checkbox" name="hashtags" value="#ライブハウス"> #ライブハウス</label>
-                <label><input type="checkbox" name="hashtags" value="#音楽好きな人と繋がりたい"> #音楽好きな人と繋がりたい</label>
-                <label><input type="checkbox" name="hashtags" value="#バンド好きな人と繋がりたい"> #バンド好きな人と繋がりたい</label>
-                <label><input type="checkbox" name="hashtags" value="#東京ライブ"> #東京ライブ</label>
-                <label><input type="checkbox" name="hashtags" value="#渋谷"> #渋谷</label>
-                <label><input type="checkbox" name="hashtags" value="#下北沢"> #下北沢</label>
-                <label><input type="checkbox" name="hashtags" value="#〇〇企画"> #〇〇企画</label>
-                </div>
+                <label><input type="checkbox" name="hashtags" value="#バンドマン太郎"> #バンドマン太郎</label>
+                    <label><input type="checkbox" name="hashtags" value="#バンド"> #バンド</label>
+                    <label><input type="checkbox" name="hashtags" value="#ライブ"> #ライブ</label>
+                    <label><input type="checkbox" name="hashtags" value="#音楽"> #音楽</label>
+                    <label><input type="checkbox" name="hashtags" value="#邦ロック"> #邦ロック</label>
+                    <label><input type="checkbox" name="hashtags" value="#インディーズバンド"> #インディーズバンド</label>
+                    <label><input type="checkbox" name="hashtags" value="#LiveInfo"> #LiveInfo</label>
+                    <label><input type="checkbox" name="hashtags" value="#拡散希望"> #拡散希望</label>
+                    <label><input type="checkbox" name="hashtags" value="#バンド好きと繋がりたい"> #バンド好きと繋がりたい</label>
+                    <label><input type="checkbox" name="hashtags" value="#ライブ告知"> #ライブ告知</label>
+                    <label><input type="checkbox" name="hashtags" value="#新曲"> #新曲</label>
+                    <label><input type="checkbox" name="hashtags" value="#路上ライブ"> #路上ライブ</label>
+                    <label><input type="checkbox" name="hashtags" value="#弾き語り"> #弾き語り</label>
+                    <label><input type="checkbox" name="hashtags" value="#チケット予約受付中"> #チケット予約受付中</label>
+                    <label><input type="checkbox" name="hashtags" value="#音楽好きな人と繋がりたい"> #音楽好きな人と繋がりたい</label>
+                    <label><input type="checkbox" name="hashtags" value="#今日のライブ"> #今日のライブ</label>
+                    <label><input type="checkbox" name="hashtags" value="#フェス"> #フェス</label>
+                    <label><input type="checkbox" name="hashtags" value="#対バン"> #対バン</label>
+                    </div>
 
             <button type="submit">告知文を生成</button>
         </form>
