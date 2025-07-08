@@ -36,12 +36,12 @@
             overflow: hidden;
             width: 100%;
             aspect-ratio: 4 / 3;
-            max-height: 400px; /* 高さは固定 */
         }
         canvas {
             display: block;
             width: 100%;
             height: 100%;
+            touch-action: none;
         }
         .controls {
             margin-bottom: 20px;
@@ -253,10 +253,6 @@
         </div>
 
     </main>
-
-    <footer>
-        <p>&copy; 2024 バンドマン太郎</p>
-    </footer>
 
     <!-- キャンバス操作のためのJavaScriptファイルを読み込む -->
     <script src="{{ url_for('static', filename='js/set_diagram_maker.js') }}"></script>
