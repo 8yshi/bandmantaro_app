@@ -185,22 +185,9 @@
     </style>
 </head>
 <body>
-    <header>
-        <h1>バンドマン太郎</h1>
-        <nav>
-            <ul>
-                <!-- url_forのエンドポイント名はあなたのapp.pyの定義に合わせてください -->
-                <li><a href="{{ url_for('home') }}">トップに戻る</a></li>
-                <!-- 他のナビゲーションリンクもあればここに追加 -->
-                <li><a href="{{ url_for('flyer_maker_form') }}">フライヤー作成</a></li>
-                <li><a href="{{ url_for('sns_announcement_form') }}">SNS告知文作成</a></li>
-                <li><a href="{{ url_for('friends_page') }}">友達のバンド紹介</a></li>
-                <li><a href="{{ url_for('about_page') }}">バンドマン太郎とは？</a></li>
-            </ul>
-        </nav>
-    </header>
 
     <main>
+        <a href="/" class="back-to-top-button">← トップに戻る</a>
         <h2>セット図作成ツール</h2>
 
         <div class="controls">

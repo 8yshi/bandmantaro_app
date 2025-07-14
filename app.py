@@ -9,7 +9,6 @@ import math
 import platform
 import json # jsonモジュールをインポート
 
-# ★追加: Blueprintをインポート
 from blueprints.set_diagram import set_diagram_bp
 
 app = Flask(__name__)
@@ -650,24 +649,3 @@ def generate_flyer():
     file_name = f"{band_name}_{month_str}月ライブスケジュール_A4.png"
 
     return send_file(img_io, mimetype='image/png', as_attachment=True, download_name=file_name)
-
-
-@app.route('/friends')
-def friends_page():
-    """
-    バンドマン太郎の友達（支援バンド紹介）ページを表示します。
-    """
-    bands_data = load_friends_bands() # JSONからバンド情報を読み込む
-    return render_template('friends.html', bands=bands_data) # テンプレートに渡す
-
-
-if __name__ == '__main__':
-     # dataディレクトリが存在しない場合は作成
-    if not os.path.exists(DATA_DIR):
-        os.makedirs(DATA_DIR)
-    # bands.jsonが存在しない場合は空のリストで初期化（任意、初回起動時のみ）
-    if not os.path.exists(BANDS_DATA_FILE):
-        with open(BANDS_DATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump([], f, ensure_ascii=False, indent=4)
-            print(f"Created empty {BANDS_DATA_FILE}")
-    app.run(debug=True)
